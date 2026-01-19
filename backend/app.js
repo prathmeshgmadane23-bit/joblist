@@ -1,4 +1,5 @@
 const express = require("express");
+const cors = require("cors");          // Import cors
 const connectDB = require("./db");
 const User = require("./user.model");
 
@@ -7,13 +8,17 @@ const app = express();
 // Middleware
 app.use(express.json());
 
+// Enable CORS for localhost:5317 only
+app.use(cors({
+  origin: "http://localhost:5173"
+}));
+
 // Connect MongoDB
 connectDB();
 
 /**
  * REGISTER
  * POST /users/register
- * body: { name, email, password }
  */
 app.post("/users/register", async (req, res) => {
   try {
@@ -23,18 +28,12 @@ app.post("/users/register", async (req, res) => {
       return res.status(400).json({ message: "All fields required" });
     }
 
-    // Check if user already exists
     const userExists = await User.findOne({ email });
     if (userExists) {
       return res.status(409).json({ message: "User already exists" });
     }
 
-    // Create user
-    await User.create({
-      name,
-      email,
-      password,
-    });
+    await User.create({ name, email, password });
 
     res.status(201).json({
       message: "User registered successfully",
@@ -47,7 +46,6 @@ app.post("/users/register", async (req, res) => {
 /**
  * LOGIN
  * POST /users/login
- * body: { email, password }
  */
 app.post("/users/login", async (req, res) => {
   try {
@@ -76,6 +74,4 @@ app.get("/", (req, res) => {
   res.send("API running");
 });
 
-app.listen(3000, () => {
-  console.log("✅ Server running on port 3000");
-});
+module.exports = app;
